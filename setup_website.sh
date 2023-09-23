@@ -131,3 +131,11 @@ sed -i "/ssl_certificate/a \\\tssl_certificate_key ${ssl_dir}/privkey.pem;" "${n
 
 # Nginx újraindítása
 systemctl reload nginx
+
+read -p "Kérem, adja meg a git projekt linkjet: " git_link
+cd "/var/www/${domain_nev}"
+git clone "${git_link}" .
+git fetch
+git checkout Server
+composer i
+php artisan optimize
