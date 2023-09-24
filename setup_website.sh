@@ -47,7 +47,6 @@ uid_www_data=$(id -u www-data)
 
 read -p "Add meg a domain nevet: " domain_nev
 
-
 if ! dig +short $domain_nev | grep -q '^[.a-zA-Z0-9\-]*$'; then
 	echo "A megadott '$domain_nev' domain név nem érvényes."
 	exit 1
@@ -61,24 +60,23 @@ if [ "${domain_ip}" != "${server_ip}" ]; then
 	exit 1
 fi
 
-read -p "Kérem, adja meg a MySQL felhasználónevet: " mysql_user
-echo "Kérem, adja meg a MySQL jelszót: "
+read -p "Add meg a MySQL felhasználónevet: " mysql_user
+echo "Add meg a MySQL jelszót: "
 read -s mysql_password
-
-read -p "Kérem, adja meg az e-mail címét a SSL tanúsítványhoz: " email_cim
-read -s -p "Kérem, adja meg az FTP jelszót: " ftp_password
-echo
 
 # Létrehozás és beállítások
 mkdir -p "/var/www/${domain_nev}"
 chown -R www-data:www-data "/var/www/${domain_nev}"
 
 # Ellenőrizze, hogy a felhasználó már létezik-e
-if grep -q "${domain_nev}" /etc/proftpd/ftpd.passwd; then
-	echo "Az FTP felhasználó már létezik."
-else
+if ! grep -q "${domain_nev}" /etc/proftpd/ftpd.passwd; then
+	read -s -p "Add meg az FTP jelszót: " ftp_password
+	echo
+
 	echo -e "${ftp_password}\n${ftp_password}" | ftpasswd --passwd --stdin --file=/etc/proftpd/ftpd.passwd --name=${domain_nev} --uid=${uid_www_data} --gid=${uid_www_data} --home=/var/www/${domain_nev} --shell=/bin/false
 	echo "Az FTP felhasználó hozzáadva."
+else
+ 	echo "Az FTP felhasználó már létezik."
 fi
 
 systemctl restart proftpd
@@ -97,16 +95,17 @@ mysql -e "FLUSH PRIVILEGES"
 cat > "${nginx_config}" << EOF
 server {
 	listen 80;
+
 	server_name ${domain_nev};
 	root /var/www/${domain_nev}/public;
 
 	index index.html index.htm index.php;
-	
+
 	access_log /var/log/nginx/${domain_nev}-access.log;
 	error_log /var/log/nginx/${domain_nev}-error.log;
 
 	location / {
-		try_files $uri $uri/ /index.php?$query_string;
+		try_files \$uri \$uri/ /index.php?\$query_string;
 	}
 
 	location ~ \.php$ {
@@ -121,11 +120,23 @@ ln -s "${nginx_config}" "/etc/nginx/sites-enabled/"
 systemctl reload nginx
 
 # SSL tanúsítvány létrehozása a Certbot-tal
-certbot certonly --webroot -d "${domain_nev}" --email "${email_cim}" --agree-tos -w "/var/www/${domain_nev}"
+if ! [[ -d /etc/letsencrypt/live/${domain_nev} ]]; then
+	read -p "Add meg az e-mail címét a SSL tanúsítványhoz: " email_cim
+
+	echo "SSL léterhozása..."
+	echo
+
+	certbot certonly --webroot -d "${domain_nev}" --email "${email_cim}" --agree-tos -w "/var/www/${domain_nev}"
+
+	echo "SSL elkészült."
+	echo
+else
+	echo "SSL már létezik ehhez a domainhez."
+fi
 
 # Nginx konfiguráció frissítése SSL-tanúsítvánnyal
 sed -i "s/# server_name/server_name/g" "${nginx_config}"
-sed -i "s/listen 80/listen 443 ssl/g" "${nginx_config}"
+sed -i 's/listen 80;/&\n\tlisten 443 ssl;/' "${nginx_config}"
 sed -i "/listen 443 ssl/a \\\tssl_certificate ${ssl_dir}/fullchain.pem;" "${nginx_config}"
 sed -i "/ssl_certificate/a \\\tssl_certificate_key ${ssl_dir}/privkey.pem;" "${nginx_config}"
 
