@@ -148,5 +148,5 @@ cd "/var/www/${domain_nev}"
 sudo -u www-data git clone "${git_link}" .
 sudo -u www-data git fetch
 sudo -u www-data git checkout Server
-sudo -u www-data composer i
+sudo -u www-data composer i --optimize-autoloader --no-dev
 sudo -u www-data php artisan optimize
