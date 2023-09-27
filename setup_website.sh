@@ -65,7 +65,7 @@ echo "Add meg a MySQL jelszót: "
 read -s mysql_password
 
 # Létrehozás és beállítások
-mkdir -p "/var/www/${domain_nev}"
+mkdir -p "/var/www/${domain_nev}/public"
 chown -R www-data:www-data "/var/www/${domain_nev}"
 
 # Ellenőrizze, hogy a felhasználó már létezik-e
@@ -126,7 +126,7 @@ if ! [[ -d /etc/letsencrypt/live/${domain_nev} ]]; then
 	echo "SSL léterhozása..."
 	echo
 
-	certbot certonly --webroot -d "${domain_nev}" --email "${email_cim}" --agree-tos -w "/var/www/${domain_nev}"
+	certbot certonly --webroot -d "${domain_nev}" --email "${email_cim}" --agree-tos -w "/var/www/${domain_nev}/public"
 
 	echo "SSL elkészült."
 	echo
@@ -143,10 +143,10 @@ sed -i "/ssl_certificate/a \\\tssl_certificate_key ${ssl_dir}/privkey.pem;" "${n
 # Nginx újraindítása
 systemctl reload nginx
 
-read -p "Kérem, adja meg a git projekt linkjet: " git_link
+read -p "Add meg a git projekt linkjet: " git_link
 cd "/var/www/${domain_nev}"
-git clone "${git_link}" .
-git fetch
-git checkout Server
-composer i
-php artisan optimize
+sudo -u www-data git clone "${git_link}" .
+sudo -u www-data git fetch
+sudo -u www-data git checkout Server
+sudo -u www-data composer i
+sudo -u www-data php artisan optimize
