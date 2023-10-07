@@ -104,6 +104,11 @@ server {
 	access_log /var/log/nginx/${domain_nev}-access.log;
 	error_log /var/log/nginx/${domain_nev}-error.log;
 
+	location ~* \.(ico|pdf|flv|jpg|jpeg|png|gif|js|css|swf|ttf|woff|woff2)$ {
+		expires 1h;
+		add_header Cache-Control "public, no-transform";
+	}
+
 	location / {
 		try_files \$uri \$uri/ /index.php?\$query_string;
 	}
