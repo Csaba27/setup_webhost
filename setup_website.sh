@@ -105,7 +105,7 @@ server {
 	error_log /var/log/nginx/${domain_nev}-error.log;
 
 	location ~* \.(ico|pdf|flv|jpg|jpeg|png|gif|js|css|swf|ttf|woff|woff2)$ {
-		expires 1h;
+		expires 1y;
 		add_header Cache-Control "public, no-transform";
 	}
 
