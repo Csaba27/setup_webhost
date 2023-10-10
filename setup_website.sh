@@ -104,7 +104,7 @@ server {
 	access_log /var/log/nginx/${domain_nev}-access.log;
 	error_log /var/log/nginx/${domain_nev}-error.log;
 
-	location ~* \.(ico|pdf|flv|jpg|jpeg|png|gif|js|css|swf|ttf|woff|woff2)$ {
+	location ~* \.(ico|pdf|flv|jpg|jpeg|png|gif|js|css|swf|ttf|woff|woff2|webp)$ {
 		expires 1y;
 		add_header Cache-Control "public, no-transform";
 	}
