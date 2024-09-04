@@ -29,7 +29,7 @@ proftpd_create_authuserfile() {
 # Ellenőrizzük a szükséges szoftverek telepítettségét
 check_installed proftpd "A ProFTPD"
 check_installed php "A PHP"
-check_installed nginx "Az Nginx"
+check_installed nginx "A Nginx"
 check_installed mysql "A MySQL"
 
 # FTP szerver konfiguráció ellenőrzés
